@@ -5,21 +5,10 @@ import psycopg2
 import uuid
 
 app = FastApi()
-conn = None
+database_url = env.get("DATABASE_URL")
 
-try:
-    conn = psycopg2.connect(
-        database="your_database_name",
-        user="your_username",
-        password="your_password",
-        host="your_host_address",
-        port="5432"
-    )
-    print("Connection successful")
-except psycopg2.Error as e:
-    print(f"Error connecting to PostgreSQL: {e}")
-    conn = None
 
+databaseWrapper = DatabaseWrapper(database_url)
 
 
 class User(BaseModel):
@@ -30,4 +19,12 @@ class User(BaseModel):
 
 @app.post("/updateScore")
 async def updateScore(userId: uuid.SafeUUID, score: int): 
+    pass
+
+@app.get("/getScore")
+async def getScore(userId: uuid.SafeUUID):
+    pass
+
+@app.get("/getTopXScores")
+async def getTop100Scores(): 
     pass
