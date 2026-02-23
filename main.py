@@ -10,7 +10,6 @@ import uuid
 load_dotenv()
 app = FastAPI()
 database_url = os.getenv("DATABASE_URL")
-
 databaseWrapper = DatabaseWrapper(database_url)
 
 class CreateUserRequest(BaseModel):
@@ -25,6 +24,9 @@ class GetScoreRequest(BaseModel):
 
 class GetTopXScoresRequest(BaseModel):
     x: int
+
+class GetUserContextRequest(BaseModel):
+    userId: uuid.UUID
 
 @app.post("/updateScore")
 async def updateScore(request: UpdateScoreRequest): 
@@ -48,3 +50,11 @@ async def getTopXScores(request: GetTopXScoresRequest):
 async def createUser(request: CreateUserRequest):
     user_id = databaseWrapper.create_user(request.username)
     return {"userId": user_id}
+
+@app.get("/getUserContext")
+async def getUserContext(request: GetUserContextRequest):
+    data = databaseWrapper.get_user_with_neighbors(request.userId)
+    if data["target"] is not None:
+        return {"user_context": data}
+    else:
+        return {"message": "User not found"}, 404

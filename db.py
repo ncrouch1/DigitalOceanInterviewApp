@@ -1,5 +1,5 @@
 from sqlalchemy import create_engine
-from sqlalchemy.orm import declarative_base
+from sqlalchemy.orm import declarative_base, Session
 from sqlalchemy import Column, String, Integer
 from sqlalchemy.dialects.postgresql import UUID
 import uuid
@@ -16,10 +16,11 @@ class User(Base):
 class DatabaseWrapper():
     def __init__(self, database_url):
         self.engine = create_engine(database_url)
+        self.engine.begin()
         User.metadata.create_all(self.engine)
 
     def get_connection(self):
-        return self.engine.connect()
+        return Session(self.engine)
 
     def create_user(self, username):
         new_user_id = uuid.uuid4()
@@ -28,6 +29,7 @@ class DatabaseWrapper():
             connection.execute(User.__table__.insert(), [
                 {"id": new_user_id, "username": new_user.username, "score": 0}
             ])
+            connection.commit()
             return new_user_id
 
     def update_score(self, user_id, score):
@@ -35,6 +37,7 @@ class DatabaseWrapper():
             connection.execute(
                 User.__table__.update().where(User.id == user_id).values(score=score)
             )
+            connection.commit()
 
     def get_score(self, user_id):
         with self.get_connection() as connection:
@@ -60,7 +63,7 @@ class DatabaseWrapper():
             if not target_row:
                 return {"above": None, "target": None, "below": None}
 
-            target = _row_to_dict(target_row)
+            target = dict(target_row)
             score = target_row["score"]
 
             # Nearest user with a higher score (better rank)
@@ -72,9 +75,8 @@ class DatabaseWrapper():
             below_row = conn.execute(
                 User.__table__.select().where(User.score < score).order_by(User.score.desc(), User.id.asc()).limit(1)
             ).mappings().fetchone() 
-
             return {
-                "above": _row_to_dict(above_row) if above_row else None,
+                "above": dict(above_row) if above_row else None,
                 "target": target,
-                "below": _row_to_dict(below_row) if below_row else None,
+                "below": dict(below_row) if below_row else None,
             }
