@@ -8,7 +8,7 @@ COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
 # 3. Copy your source code (maintaining the 'src' folder structure)
-COPY src ./src
+COPY . ./src
 
 # 4. Expose the port
 EXPOSE 8080
