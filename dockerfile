@@ -1,20 +1,22 @@
 FROM python:3.13
+
+# 1. Set the working directory
 WORKDIR /usr/local/app
 
-RUN cd /usr/local/app
-RUN python3 -m venv venv
-RUN source venv/bin/activate
-
-# Install the application dependencies
+# 2. Install dependencies directly to the system Python
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy in the source code
+# 3. Copy your source code (maintaining the 'src' folder structure)
 COPY src ./src
+
+# 4. Expose the port
 EXPOSE 8080
 
-# Setup an app user so the container doesn't run as the root user
-RUN useradd app
+# 5. Setup and switch to a non-root user
+RUN useradd -m app
 USER app
 
-CMD ["fastapi", "run", "/usr/local/app/main.py", "--port", "8080"]
+# 6. Start the app. 
+# Note the path: if main.py is inside the 'src' folder, reference it as 'src/main.py'
+CMD ["fastapi", "run", "src/main.py", "--port", "8080"]
