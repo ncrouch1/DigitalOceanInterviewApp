@@ -49,3 +49,32 @@ class DatabaseWrapper():
                 User.__table__.select().order_by(User.score.desc()).limit(x)
             ).fetchall()
             return [{"username": row.username, "score": row.score} for row in result]
+
+    def get_user_with_neighbors(self, user_id: uuid.UUID):
+        with self.get_connection() as conn:
+            # Fetch target user
+            target_row = conn.execute(
+                User.__table__.select().where(User.id == user_id)
+            ).mappings().fetchone()
+
+            if not target_row:
+                return {"above": None, "target": None, "below": None}
+
+            target = _row_to_dict(target_row)
+            score = target_row["score"]
+
+            # Nearest user with a higher score (better rank)
+            above_row = conn.execute(
+                User.__table__.select().where(User.score > score).order_by(User.score.asc(), User.id.asc()).limit(1)
+            ).mappings().fetchone()
+
+            # Nearest user with a lower score (worse rank)
+            below_row = conn.execute(
+                User.__table__.select().where(User.score < score).order_by(User.score.desc(), User.id.asc()).limit(1)
+            ).mappings().fetchone() 
+
+            return {
+                "above": _row_to_dict(above_row) if above_row else None,
+                "target": target,
+                "below": _row_to_dict(below_row) if below_row else None,
+            }
