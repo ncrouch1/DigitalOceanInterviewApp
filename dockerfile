@@ -19,4 +19,4 @@ USER app
 
 # 6. Start the app. 
 # Note the path: if main.py is inside the 'src' folder, reference it as 'src/main.py'
-CMD ["fastapi", "run", "src/main.py", "--port", "8080"]
+CMD ["honcho", "start"]
